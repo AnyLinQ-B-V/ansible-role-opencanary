@@ -1,2 +1,7 @@
 ---
-# handlers file for ansibletemplate
+# handlers file for opencanary
+
+- name: Restart opencanary
+  ansible.builtin.service:
+    name: opencanary
+    state: restarted

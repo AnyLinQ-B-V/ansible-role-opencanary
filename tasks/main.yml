@@ -1,2 +1,45 @@
 ---
-# tasks file for ansibletemplate
+# tasks file for opencanary
+- name: Install python dependencies
+  ansible.builtin.pip:
+    name: "{{ item }}"
+  loop: "{{ opencanary_python_packages }}"
+
+- name: Setup paths
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop:
+    - /etc/opencanaryd
+    - /var/log/opencanary
+
+- name: Define __opencanary_config
+  set_fact:
+    __opencanary_config: "{{ opencanary_config_default | combine(opencanary_config) }}"
+
+- name: Configure opencanary
+  ansible.builtin.copy:
+    content: "{{ __opencanary_config }}"
+    dest: "/etc/opencanaryd/opencanary.conf"
+    mode: 0644
+  notify: Restart opencanary
+
+- name: Configure opencanary log rotation
+  ansible.builtin.template:
+    src: logrotate.conf.j2
+    dest: "{{ opencanary_logrotate_path }}/opencanary"
+    mode: 0644
+
+- name: Configure systemd
+  ansible.builtin.template:
+    src: opencanary.service.j2
+    dest: "{{ opencanary_systemd_path }}/opencanary.service"
+    mode: 0644
+
+- name: Mark opencanary enabled on boot, and state if set
+  ansible.builtin.systemd:
+    name: opencanary
+    state: "{{ opencanary_service_state }}"
+    enabled: true
+    daemon_reload: true
