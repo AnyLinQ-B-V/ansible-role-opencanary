@@ -4,6 +4,13 @@
   become: true
   collections:
     - community.general
+  vars:
+    opencanary_loggers:
+      file: /tmp/opencanary.log
+      console: ext://sys.stdout
+    opencanary_config:
+      device.node_id: molecule-docker
+      rdp.enabled: true
   tasks:
     - name: Run role
       ansible.builtin.include_role:
